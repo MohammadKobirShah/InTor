@@ -2,7 +2,7 @@
  * Premium Rotating Proxy Gateway (#1 BrightData / Oxylabs / Smartproxy Pro-Level Architecture)
  * Supports username/password-based targeting rules (type, city, session) and direct routing
  * through local Tor SOCKS5 (127.0.0.1:9050) and HTTP Privoxy (127.0.0.1:8118) on Render & Railway.
- * Includes Smart Tor Indian Exit Node verification & fallback.
+ * Includes Smart Tor Indian Exit Node verification with 15-second Tor circuit window.
  */
 
 const axios = require('axios');
@@ -12,7 +12,7 @@ const { loadPool } = require('./checker_engine');
 
 const stickySessionCache = new Map();
 
-function withTimeout(promise, ms = 1500) {
+function withTimeout(promise, ms = 15000) {
   return Promise.race([
     promise,
     new Promise((_, reject) => setTimeout(() => reject(new Error('Proxy Gateway Timeout')), ms))
@@ -70,6 +70,7 @@ function selectPremiumProxy(rules = {}) {
   const data = loadPool();
   let pool = data.pool.filter(p => p.status === 'online' || p.score >= 80);
 
+  // Direct Tor local node selection if type === 'tor'
   if (rules.type === 'tor') {
     const torProxy = pool.find(p => p.id === 'in-tor-local-8118' || p.id === 'in-tor-socks5-9050' || p.type === 'tor');
     if (torProxy) return torProxy;
@@ -132,7 +133,7 @@ function selectPremiumProxy(rules = {}) {
 
 /**
  * Execute request through selected proxy using SOCKS5 / HTTP Proxy Agent
- * Includes Tor status verification and Smart Indian Fallback!
+ * #1 UPGRADE: Allows up to 15,000 ms (15s) for Tor 3-hop encrypted circuit building to Indian Exit Nodes ({in})!
  */
 async function executePremiumProxyFetch(targetUrl, method = 'GET', headers = {}, data = null, rules = {}) {
   const selectedProxy = selectPremiumProxy(rules);
@@ -155,6 +156,10 @@ async function executePremiumProxyFetch(targetUrl, method = 'GET', headers = {},
   let egressStatus = 'via_proxy_agent';
   let torStatus = rules.type === 'tor' ? 'Active - Routed via Indian Tor Exit Node ({in})' : 'N/A (Non-Tor Category)';
 
+  // For Tor exit routing, give 15,000ms (15 seconds) because 3-hop Tor circuits take 4-10s to handshake
+  // For standard residential/mobile proxies, give 7,000ms (7 seconds)
+  const timeoutMs = rules.type === 'tor' ? 15000 : 7000;
+
   try {
     proxyRes = await withTimeout(axios({
       method: method,
@@ -164,14 +169,12 @@ async function executePremiumProxyFetch(targetUrl, method = 'GET', headers = {},
       httpAgent: agent,
       httpsAgent: agent,
       validateStatus: () => true,
-      timeout: 2500
-    }), 2500);
+      timeout: timeoutMs
+    }), timeoutMs);
   } catch (err) {
     // #1 RESILIENCE & SMART INDIAN FALLBACK:
-    // When local Tor daemon is not running (e.g. Native Node mode without Docker on Render),
-    // automatically fallback to an active Indian Residential/Mobile proxy so target still sees India!
     if (rules.type === 'tor') {
-      torStatus = 'Tor Daemon Offline - Routed via High-Anonymity Indian Residential Proxy (Deploy Docker on Render for Tor Exits)';
+      torStatus = 'Tor Circuit Timeout - Routed via High-Anonymity Indian Residential Proxy (Verify Tor Bootstrap on Render)';
     }
     egressStatus = 'via_cloud_paas_resilience_egress';
     proxyRes = await axios({
@@ -180,7 +183,7 @@ async function executePremiumProxyFetch(targetUrl, method = 'GET', headers = {},
       headers: cleanedHeaders,
       data: data,
       validateStatus: () => true,
-      timeout: 4000
+      timeout: 8000
     });
   }
 

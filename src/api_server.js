@@ -27,9 +27,12 @@ app.use(express.static(path.resolve(__dirname, '../public')));
 function applyFilters(pool, query) {
   const { status, city, isp, type, protocol, minScore, limit, sortBy } = query;
 
-  if (status) {
-    pool = pool.filter(p => p.status.toLowerCase() === status.toLowerCase());
+  // #1 UPGRADE: Default to 'online' (active/live proxies only) unless 'all' is explicitly requested
+  const statusFilter = status || 'online';
+  if (statusFilter.toLowerCase() !== 'all') {
+    pool = pool.filter(p => p.status.toLowerCase() === statusFilter.toLowerCase());
   }
+
   if (type) {
     pool = pool.filter(p => p.type && p.type.toLowerCase() === type.toLowerCase());
   }

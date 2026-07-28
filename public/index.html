@@ -65,9 +65,20 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
+    .badge-timer {
+      background: rgba(46, 160, 67, 0.2);
+      color: #3fb950;
+      padding: 5px 12px;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
 
     /* Buttons & Actions */
-    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .btn {
       background: var(--accent);
       color: #fff;
@@ -192,7 +203,7 @@
       border: 1px solid var(--border);
       border-radius: 10px;
       overflow-x: auto;
-      margin-bottom: 40px;
+      margin-bottom: 32px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.2);
     }
     table {
@@ -250,14 +261,54 @@
       background: #21262d;
       border: 1px solid var(--border);
       color: var(--text);
-      padding: 4px 8px;
+      padding: 5px 10px;
       border-radius: 4px;
       font-size: 0.75rem;
+      font-weight: 600;
       cursor: pointer;
-      margin-left: 8px;
       transition: all 0.15s;
     }
     .copy-btn:hover { background: var(--brand); color: #0d1117; }
+
+    /* API Docs Panel (Auto-Detected Domain) */
+    .api-docs {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+    .api-docs h2 {
+      color: var(--heading);
+      margin-bottom: 8px;
+      font-size: 1.3rem;
+    }
+    .snippet-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 16px;
+      font-family: monospace;
+      font-size: 0.88rem;
+      color: var(--brand);
+      overflow-x: auto;
+      margin: 10px 0 18px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .snippet-box code { flex: 1; margin-right: 12px; }
+    .snippet-box button {
+      background: #21262d;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-family: var(--font);
+    }
+    .snippet-box button:hover { background: var(--accent); color: #fff; }
 
     /* Toast notification */
     #toast {
@@ -293,9 +344,10 @@
           <span>🇮🇳 #1 Indian Proxy Platform & Pro API</span>
           <span class="badge-top">Live / Active Only</span>
         </div>
-        <p style="color: #8b949e; font-size: 0.9rem; margin-top: 4px;">100% Verified Live Indian Proxies — Full ISP, ASN, Location, Speed & Coordinates</p>
+        <p style="color: #8b949e; font-size: 0.9rem; margin-top: 4px;">100% Verified Live Indian Proxies — Auto-Harvested Every 60s & Dynamic Domain Detection</p>
       </div>
       <div class="btn-group">
+        <span class="badge-timer" id="auto-timer-badge">⏳ Auto-Refresh: 60s</span>
         <button class="btn btn-secondary" onclick="exportTxt()">📥 Export Filtered .TXT</button>
         <button class="btn" onclick="triggerSweep()">⚡ Re-Check Live Pool Now</button>
       </div>
@@ -360,9 +412,41 @@
           </tr>
         </thead>
         <tbody id="proxy-table-body">
-          <tr><td colspan="9" style="text-align: center; color: #8b949e;">Loading 100% active Indian proxy pool...</td></tr>
+          <tr><td colspan="9" style="text-align: center; color: #8b949e; padding: 28px;">Loading 100% active Indian proxy pool...</td></tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Dynamic Origin / Domain Auto-Detected API Integration Section -->
+    <div class="api-docs">
+      <h2>🌐 Dynamic Hosted Domain API Endpoints (Auto-Detected)</h2>
+      <p style="color: #8b949e; font-size: 0.9rem;">
+        No hardcoded localhost! Below are the exact API and Rotational Gateway commands for your current hosted domain (<strong id="display-domain" style="color: #fff;">...</strong>):
+      </p>
+
+      <p style="font-weight: 600; margin-top: 14px; color: #f0f6fc;">1. Fetch 100% Verified Live Indian Proxies (.TXT format ready for scrapers)</p>
+      <div class="snippet-box">
+        <code id="code-txt-export">loading...</code>
+        <button onclick="copyCode('code-txt-export')">📋 Copy</button>
+      </div>
+
+      <p style="font-weight: 600; color: #f0f6fc;">2. Fetch Only 4G/5G Mobile Cellular Indian Proxies (JSON format)</p>
+      <div class="snippet-box">
+        <code id="code-mobile">loading...</code>
+        <button onclick="copyCode('code-mobile')">📋 Copy</button>
+      </div>
+
+      <p style="font-weight: 600; color: #f0f6fc;">3. Custom ISP Lookup (e.g. Reliance Jio or Airtel)</p>
+      <div class="snippet-box">
+        <code id="code-isp">loading...</code>
+        <button onclick="copyCode('code-isp')">📋 Copy</button>
+      </div>
+
+      <p style="font-weight: 600; color: #f0f6fc;">4. Smart Rotational Gateway (Auto-Rotates across Top Indian Proxies)</p>
+      <div class="snippet-box">
+        <code id="code-gateway">loading...</code>
+        <button onclick="copyCode('code-gateway')">📋 Copy</button>
+      </div>
     </div>
   </div>
 
@@ -371,6 +455,19 @@
   <script>
     let allProxiesData = [];
     let activeCategory = 'all';
+    let countdownSeconds = 60;
+
+    // AUTO DETECT HOSTED DOMAIN & ORIGIN (NO HARDCODED LOCALHOST!)
+    function setupDynamicOriginSnippets() {
+      const origin = window.location.origin;
+      const hostname = window.location.hostname || 'localhost';
+
+      document.getElementById('display-domain').textContent = origin;
+      document.getElementById('code-txt-export').textContent = `curl "${origin}/api/v1/proxies/export?format=txt&status=online"`;
+      document.getElementById('code-mobile').textContent = `curl "${origin}/api/v1/proxies/mobile?status=online&minScore=95"`;
+      document.getElementById('code-isp').textContent = `curl "${origin}/api/v1/proxies/isp/jio"`;
+      document.getElementById('code-gateway').textContent = `curl -x http://${hostname}:8899 "http://ip-api.com/json/"`;
+    }
 
     function showToast(msg = '✓ Proxy URL copied to clipboard!') {
       const t = document.getElementById('toast');
@@ -381,6 +478,12 @@
 
     function copyText(text) {
       navigator.clipboard.writeText(text).then(() => showToast());
+    }
+
+    function copyCode(elementId) {
+      const text = document.getElementById(elementId).textContent;
+      copyText(text);
+      showToast('✓ Command copied to clipboard!');
     }
 
     async function fetchStats() {
@@ -406,7 +509,6 @@
         if (data.success) {
           allProxiesData = data.proxies || [];
           
-          // Calculate average DL speed
           if (allProxiesData.length > 0) {
             const totalMbps = allProxiesData.reduce((s, p) => s + (p.downloadMbps || 0), 0);
             const avgSpeed = (totalMbps / allProxiesData.length).toFixed(1);
@@ -430,14 +532,12 @@
       const searchTerm = (document.getElementById('search-input').value || '').toLowerCase().trim();
 
       let filtered = allProxiesData.filter(p => {
-        // Category filter
         if (activeCategory === 'mobile' && p.type !== 'mobile') return false;
         if (activeCategory === 'residential' && p.type !== 'residential') return false;
         if (activeCategory === 'datacenter' && p.type !== 'datacenter') return false;
         if (activeCategory === 'tor' && p.type !== 'tor') return false;
         if (activeCategory === 'socks5' && p.protocol !== 'socks5') return false;
 
-        // Search filter (IP, URL, City, State, ISP, ASN, ZIP)
         if (searchTerm) {
           const combo = `${p.url} ${p.ip} ${p.city} ${p.state} ${p.zip} ${p.isp} ${p.asn} ${p.org}`.toLowerCase();
           if (!combo.includes(searchTerm)) return false;
@@ -495,7 +595,6 @@
     }
 
     function exportTxt() {
-      const searchTerm = (document.getElementById('search-input').value || '').toLowerCase().trim();
       let url = `/api/v1/proxies/export?format=txt&status=online`;
       if (activeCategory !== 'all' && activeCategory !== 'socks5') {
         url += `&type=${activeCategory}`;
@@ -514,6 +613,7 @@
         await fetch('/api/v1/proxies/check', { method: 'POST' });
         await fetchStats();
         await loadAllProxies();
+        countdownSeconds = 60;
         showToast('✓ Verified pool quality & speeds!');
       } catch (err) {
         alert('Check failed: ' + err.message);
@@ -523,10 +623,21 @@
       }
     }
 
+    // AUTO-REFRESH LIVE PROXIES TIMER EVERY SECOND
+    setInterval(() => {
+      countdownSeconds--;
+      if (countdownSeconds <= 0) {
+        countdownSeconds = 60;
+        fetchStats();
+        loadAllProxies();
+      }
+      document.getElementById('auto-timer-badge').textContent = `⏳ Auto-Refresh: ${countdownSeconds}s`;
+    }, 1000);
+
     // Initial load
+    setupDynamicOriginSnippets();
     fetchStats();
     loadAllProxies();
   </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a223962c48b6b60e',t:'MTc4NTIzODU5MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
-

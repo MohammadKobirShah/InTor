@@ -419,33 +419,33 @@
 
     <!-- Dynamic Origin / Domain Auto-Detected API Integration Section -->
     <div class="api-docs">
-      <h2>🌐 Dynamic Hosted Domain API Endpoints (Auto-Detected)</h2>
+      <h2>🌐 Cloud PaaS & Hosted Domain API Integration (Auto-Detected)</h2>
       <p style="color: #8b949e; font-size: 0.9rem;">
-        No hardcoded localhost! Below are the exact API and Rotational Gateway commands for your current hosted domain (<strong id="display-domain" style="color: #fff;">...</strong>):
+        No hardcoded localhost! Below are the exact commands for your cloud host (<strong id="display-domain" style="color: #fff;">...</strong>):
       </p>
 
-      <p style="font-weight: 600; margin-top: 14px; color: #f0f6fc;">1. Fetch 100% Verified Live Indian Proxies (.TXT format ready for scrapers)</p>
+      <p style="font-weight: 600; margin-top: 14px; color: #f0f6fc;">1. Single-Port Transparent HTTP Proxy Gateway (Works 100% on Render / Cloud Host without custom port!)</p>
+      <div class="snippet-box">
+        <code id="code-gateway-singleport">loading...</code>
+        <button onclick="copyCode('code-gateway-singleport')">📋 Copy</button>
+      </div>
+
+      <p style="font-weight: 600; color: #f0f6fc;">2. REST Proxy Fetch Endpoint (Alternative for Browser / Scraper GET requests)</p>
+      <div class="snippet-box">
+        <code id="code-fetch-api">loading...</code>
+        <button onclick="copyCode('code-fetch-api')">📋 Copy</button>
+      </div>
+
+      <p style="font-weight: 600; color: #f0f6fc;">3. Fetch 100% Verified Live Indian Proxies (.TXT format ready for scrapers)</p>
       <div class="snippet-box">
         <code id="code-txt-export">loading...</code>
         <button onclick="copyCode('code-txt-export')">📋 Copy</button>
       </div>
 
-      <p style="font-weight: 600; color: #f0f6fc;">2. Fetch Only 4G/5G Mobile Cellular Indian Proxies (JSON format)</p>
+      <p style="font-weight: 600; color: #f0f6fc;">4. Fetch Only 4G/5G Mobile Cellular Indian Proxies (JSON format)</p>
       <div class="snippet-box">
         <code id="code-mobile">loading...</code>
         <button onclick="copyCode('code-mobile')">📋 Copy</button>
-      </div>
-
-      <p style="font-weight: 600; color: #f0f6fc;">3. Custom ISP Lookup (e.g. Reliance Jio or Airtel)</p>
-      <div class="snippet-box">
-        <code id="code-isp">loading...</code>
-        <button onclick="copyCode('code-isp')">📋 Copy</button>
-      </div>
-
-      <p style="font-weight: 600; color: #f0f6fc;">4. Smart Rotational Gateway (Auto-Rotates across Top Indian Proxies)</p>
-      <div class="snippet-box">
-        <code id="code-gateway">loading...</code>
-        <button onclick="copyCode('code-gateway')">📋 Copy</button>
       </div>
     </div>
   </div>
@@ -463,10 +463,11 @@
       const hostname = window.location.hostname || 'localhost';
 
       document.getElementById('display-domain').textContent = origin;
+      // Single-Port HTTP Proxy command (No :8899 needed on Render/PaaS!)
+      document.getElementById('code-gateway-singleport').textContent = `curl -x ${origin} "http://ip-api.com/json/"`;
+      document.getElementById('code-fetch-api').textContent = `curl "${origin}/api/v1/fetch?url=http://ip-api.com/json/"`;
       document.getElementById('code-txt-export').textContent = `curl "${origin}/api/v1/proxies/export?format=txt&status=online"`;
       document.getElementById('code-mobile').textContent = `curl "${origin}/api/v1/proxies/mobile?status=online&minScore=95"`;
-      document.getElementById('code-isp').textContent = `curl "${origin}/api/v1/proxies/isp/jio"`;
-      document.getElementById('code-gateway').textContent = `curl -x http://${hostname}:8899 "http://ip-api.com/json/"`;
     }
 
     function showToast(msg = '✓ Proxy URL copied to clipboard!') {
@@ -639,5 +640,5 @@
     fetchStats();
     loadAllProxies();
   </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a223c4ccc9435807',t:'MTc4NTI0MDUwMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

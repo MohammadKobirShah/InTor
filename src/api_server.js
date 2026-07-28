@@ -1,6 +1,7 @@
 /**
  * Enterprise Indian Proxy REST API & Dashboard Server (#1 Pro-Grade Suite)
  * Serves JSON APIs for smart proxy selection, real-time health checks, and dashboard analytics.
+ * Includes Single-Port Transparent HTTP Proxy Gateway & REST /fetch endpoint for Render/Cloud PaaS!
  */
 
 const fs = require('fs');
@@ -8,15 +9,79 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const axios = require('axios');
+const { HttpProxyAgent } = require('http-proxy-agent');
+const { SocksProxyAgent } = require('socks-proxy-agent');
 const { loadPool, savePool, runPoolSweep, startAutoPoolUpdater } = require('./checker_engine');
 const { getBestIndianProxy, startGateway } = require('./rotation_gateway');
 
-const API_PORT = process.env.API_PORT || 8000;
+const API_PORT = process.env.PORT || process.env.API_PORT || 8000;
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
+
+/**
+ * Helper: Forward an HTTP request through a rotated Indian Proxy
+ */
+async function executeProxyFetch(targetUrl, method = 'GET', headers = {}, data = null) {
+  const selectedProxy = getBestIndianProxy();
+  if (!selectedProxy) {
+    throw new Error('No online Indian proxies available in the pool');
+  }
+
+  const isSocks = selectedProxy.url.toLowerCase().startsWith('socks') || (selectedProxy.protocol && selectedProxy.protocol.toLowerCase().includes('socks'));
+  const agent = isSocks ? new SocksProxyAgent(selectedProxy.url) : new HttpProxyAgent(selectedProxy.url);
+
+  const cleanedHeaders = { ...headers };
+  delete cleanedHeaders.host;
+  delete cleanedHeaders.connection;
+  delete cleanedHeaders['content-length'];
+
+  const proxyRes = await axios({
+    method: method,
+    url: targetUrl,
+    headers: cleanedHeaders,
+    data: data,
+    httpAgent: agent,
+    httpsAgent: agent,
+    validateStatus: () => true,
+    timeout: 15000
+  });
+
+  return {
+    selectedProxy,
+    status: proxyRes.status,
+    headers: proxyRes.headers,
+    data: proxyRes.data
+  };
+}
+
+/**
+ * #1 UPGRADE: Single-Port Transparent HTTP Proxy Middleware (For Render / Heroku / Cloud PaaS)
+ * Catches 'curl -x http://intor2.onrender.com http://ip-api.com/json/' directly on PORT 80/443/8000!
+ */
+app.use(async (req, res, next) => {
+  if (req.url.startsWith('http://') || req.url.startsWith('https://')) {
+    try {
+      const result = await executeProxyFetch(req.url, req.method, req.headers, req.body);
+      res.setHeader('X-Indian-Proxy-ID', result.selectedProxy.id);
+      res.setHeader('X-Indian-Proxy-City', result.selectedProxy.city);
+      res.setHeader('X-Indian-Proxy-ISP', result.selectedProxy.isp);
+      res.setHeader('X-Indian-Proxy-Score', result.selectedProxy.score);
+      res.status(result.status).send(result.data);
+    } catch (err) {
+      res.status(502).json({
+        success: false,
+        error: 'Single-Port Transparent Indian Proxy Gateway fetch failed',
+        details: err.message
+      });
+    }
+  } else {
+    next();
+  }
+});
 
 // Serve Web Admin Dashboard static files
 app.use(express.static(path.resolve(__dirname, '../public')));
@@ -49,7 +114,6 @@ function applyFilters(pool, query) {
     pool = pool.filter(p => p.score >= parseInt(minScore, 10));
   }
 
-  // Sort by score (default) or latency
   if (sortBy === 'latency') {
     pool.sort((a, b) => (a.latencyMs || 9999) - (b.latencyMs || 9999));
   } else {
@@ -61,6 +125,37 @@ function applyFilters(pool, query) {
   }
   return pool;
 }
+
+/**
+ * #1 UPGRADE: Dedicated REST Proxy Forwarding Endpoint
+ * GET /api/v1/fetch?url=http://ip-api.com/json/
+ * Works 100% on Render.com without needing curl -x or custom ports!
+ */
+app.get('/api/v1/fetch', async (req, res) => {
+  const targetUrl = req.query.url;
+  if (!targetUrl || (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://'))) {
+    return res.status(400).json({
+      success: false,
+      error: 'Provide a valid "url" parameter starting with http:// or https://',
+      example: '/api/v1/fetch?url=http://ip-api.com/json/'
+    });
+  }
+
+  try {
+    const result = await executeProxyFetch(targetUrl, 'GET', req.headers);
+    res.setHeader('X-Indian-Proxy-ID', result.selectedProxy.id);
+    res.setHeader('X-Indian-Proxy-City', result.selectedProxy.city);
+    res.setHeader('X-Indian-Proxy-ISP', result.selectedProxy.isp);
+    res.setHeader('X-Indian-Proxy-Score', result.selectedProxy.score);
+    res.status(result.status).send(result.data);
+  } catch (err) {
+    res.status(502).json({
+      success: false,
+      error: 'REST Indian Proxy Gateway fetch failed',
+      details: err.message
+    });
+  }
+});
 
 /**
  * 1. Primary Filterable List Endpoint
@@ -149,7 +244,6 @@ app.get('/api/v1/proxies/tor', (req, res) => {
 /**
  * 6. PRO ROUTE: Custom ISP Filter Route
  * GET /api/v1/proxies/isp/:ispName
- * Example: /api/v1/proxies/isp/jio  OR  /api/v1/proxies/isp/airtel
  */
 app.get('/api/v1/proxies/isp/:ispName', (req, res) => {
   const ispName = req.params.ispName.toLowerCase();
@@ -215,7 +309,6 @@ app.get('/api/v1/stats', (req, res) => {
   const totalLatency = online.reduce((sum, p) => sum + (p.latencyMs || 0), 0);
   const avgLatencyMs = online.length > 0 ? Math.round(totalLatency / online.length) : 0;
 
-  // Breakdowns
   const byCity = {};
   const byISP = {};
   const byType = { residential: 0, mobile: 0, datacenter: 0, tor: 0 };
@@ -290,8 +383,12 @@ app.post('/api/v1/proxies/add', (req, res) => {
         country: 'India',
         state: 'Pending Verification',
         city: 'Unknown',
+        zip: '110001',
+        lat: 20.5937,
+        lon: 78.9629,
         isp: 'Custom Indian Proxy',
-        asn: 'Unknown',
+        org: 'Custom Network',
+        asn: 'AS0000',
         anonymity: 'Pending',
         latencyMs: 180,
         downloadMbps: 20,
@@ -317,13 +414,14 @@ app.post('/api/v1/proxies/add', (req, res) => {
 app.listen(API_PORT, '0.0.0.0', () => {
   console.log('='.repeat(80));
   console.log(`[API Server] #1 Indian Proxy Enterprise API Server running on port ${API_PORT}`);
-  console.log(`[API Server] REST API Base:        http://localhost:${API_PORT}/api/v1/proxies`);
-  console.log(`[API Server] Admin Web Dashboard:  http://localhost:${API_PORT}/`);
+  console.log(`[API Server] REST API Base:                  http://localhost:${API_PORT}/api/v1/proxies`);
+  console.log(`[API Server] Single-Port Proxy Gateway:      curl -x http://localhost:${API_PORT} "http://target.com"`);
+  console.log(`[API Server] REST Proxy Fetch Endpoint:      http://localhost:${API_PORT}/api/v1/fetch?url=http://...`);
   console.log('='.repeat(80));
 });
 
-// Automatically launch Smart Rotation Gateway alongside API server (Port 8899)
+// Automatically launch standalone Rotation Gateway on port 8899 if possible
 startGateway();
 
-// #1 UPGRADE: Automatically sweep and harvest live Indian proxies every 60 seconds (1 minute)
+// Automatically sweep and harvest live Indian proxies every 60 seconds (1 minute)
 startAutoPoolUpdater(60000);

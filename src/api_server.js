@@ -38,6 +38,7 @@ async function executeProxyFetch(targetUrl, method = 'GET', headers = {}, data =
   delete cleanedHeaders.host;
   delete cleanedHeaders.connection;
   delete cleanedHeaders['content-length'];
+  delete cleanedHeaders['x-target-url'];
 
   const proxyRes = await axios({
     method: method,
@@ -59,8 +60,8 @@ async function executeProxyFetch(targetUrl, method = 'GET', headers = {}, data =
 }
 
 /**
- * #1 UPGRADE: Single-Port Transparent HTTP Proxy Middleware (For Render / Heroku / Cloud PaaS)
- * Catches 'curl -x http://intor2.onrender.com http://ip-api.com/json/' directly on PORT 80/443/8000!
+ * #1 UPGRADE: Single-Port Transparent HTTP Proxy Middleware
+ * Works for Direct VPS, Local Docker, and environments where absolute URI requests reach Express!
  */
 app.use(async (req, res, next) => {
   if (req.url.startsWith('http://') || req.url.startsWith('https://')) {
@@ -92,7 +93,6 @@ app.use(express.static(path.resolve(__dirname, '../public')));
 function applyFilters(pool, query) {
   const { status, city, isp, type, protocol, minScore, limit, sortBy } = query;
 
-  // #1 UPGRADE: Default to 'online' (active/live proxies only) unless 'all' is explicitly requested
   const statusFilter = status || 'online';
   if (statusFilter.toLowerCase() !== 'all') {
     pool = pool.filter(p => p.status.toLowerCase() === statusFilter.toLowerCase());
@@ -127,22 +127,27 @@ function applyFilters(pool, query) {
 }
 
 /**
- * #1 UPGRADE: Dedicated REST Proxy Forwarding Endpoint
- * GET /api/v1/fetch?url=http://ip-api.com/json/
- * Works 100% on Render.com without needing curl -x or custom ports!
+ * #1 UPGRADE: Dedicated Cloud REST Proxy Forwarding Endpoint
+ * GET or POST /api/v1/fetch?url=http://ip-api.com/json/  OR  header X-Target-URL: http://...
+ * Works 100% on Render.com, Heroku, Vercel & Cloudflare Edge Load Balancers!
  */
-app.get('/api/v1/fetch', async (req, res) => {
-  const targetUrl = req.query.url;
+app.all('/api/v1/fetch', async (req, res) => {
+  const targetUrl = req.query.url || req.headers['x-target-url'] || (req.body && req.body.url);
   if (!targetUrl || (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://'))) {
     return res.status(400).json({
       success: false,
-      error: 'Provide a valid "url" parameter starting with http:// or https://',
+      error: 'Provide a valid target URL starting with http:// or https://',
+      methods: [
+        '?url=http://ip-api.com/json/',
+        'Header -> X-Target-URL: http://ip-api.com/json/',
+        'POST Body -> {"url": "http://ip-api.com/json/"}'
+      ],
       example: '/api/v1/fetch?url=http://ip-api.com/json/'
     });
   }
 
   try {
-    const result = await executeProxyFetch(targetUrl, 'GET', req.headers);
+    const result = await executeProxyFetch(targetUrl, req.method, req.headers, req.body);
     res.setHeader('X-Indian-Proxy-ID', result.selectedProxy.id);
     res.setHeader('X-Indian-Proxy-City', result.selectedProxy.city);
     res.setHeader('X-Indian-Proxy-ISP', result.selectedProxy.isp);

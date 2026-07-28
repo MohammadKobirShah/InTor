@@ -86,6 +86,16 @@ docker-compose up -d --build
 * **Tor SOCKS5 Ports**: `0.0.0.0:9050`, `9051`, `9052`
 * **Tor Privoxy HTTP Ports**: `0.0.0.0:8118`, `8119`, `8120`
 
+### 3. Cloud Deployment (Render.com / Heroku / Railway / Fly.io)
+On cloud platforms that only expose a single web port (e.g. `intor2.onrender.com`), use our **Single-Port Transparent Proxy Gateway** or **REST Fetch API**:
+```bash
+# 1. Single-Port cURL Proxying (Directly over standard port 80/443 on Render)
+curl -x https://intor2.onrender.com "http://ip-api.com/json/"
+
+# 2. REST Proxy Fetch Endpoint (Alternative for browsers & GET scrapers)
+curl "https://intor2.onrender.com/api/v1/fetch?url=http://ip-api.com/json/"
+```
+
 ---
 
 ## 📡 Pro REST API Routes (বাংলা ও ইংরেজি রেফারেন্স)

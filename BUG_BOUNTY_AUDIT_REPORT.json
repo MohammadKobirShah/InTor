@@ -1,0 +1,60 @@
+{
+  "metadata": {
+    "target_url": "http://localhost:8000",
+    "scan_timestamp": "2026-07-28 10:41:28 UTC",
+    "total_findings": 5,
+    "scanner_version": "1.0.0-PRO"
+  },
+  "findings": [
+    {
+      "title": "Missing HTTP Security Defense-in-Depth Headers",
+      "severity": "LOW",
+      "cwe": "CWE-693",
+      "endpoint": "http://localhost:8000/",
+      "description": "The application fails to set important HTTP security headers: Content-Security-Policy, X-Content-Type-Options, X-Frame-Options, Strict-Transport-Security.",
+      "evidence": "HTTP response headers received: {'X-Powered-By': 'Express', 'Access-Control-Allow-Origin': '*', 'Accept-Ranges': 'bytes', 'Cache-Control': 'public, max-age=0', 'Last-Modified': 'Tue, 28 Jul 2026 10:36:19 GMT', 'ETag': 'W/\"3cc5-19fa84bf942\"', 'Content-Type': 'text/html; charset=UTF-8', 'Content-Length': '15557', 'Date': 'Tue, 28 Jul 2026 10:41:25 GMT', 'Connection': 'keep-alive', 'Keep-Alive': 'timeout=5'}",
+      "remediation": "Configure helmet.js or Express middleware to enforce Content-Security-Policy, HSTS, X-Frame-Options, and X-Content-Type-Options.",
+      "timestamp": "2026-07-28 10:41:25"
+    },
+    {
+      "title": "Permissive Cross-Origin Resource Sharing (CORS) Policy",
+      "severity": "MEDIUM",
+      "cwe": "CWE-942",
+      "endpoint": "/api/v1/proxies",
+      "description": "The API allows requests from arbitrary origins ('*'), exposing sensitive data to cross-origin reads if cookies/tokens are added.",
+      "evidence": "Sent Origin: https://evil-attacker.com | Received Access-Control-Allow-Origin: *",
+      "remediation": "Restrict CORS to trusted admin domain origins instead of wildcard '*'.",
+      "timestamp": "2026-07-28 10:41:25"
+    },
+    {
+      "title": "Unauthenticated Admin Write Access on Sensitive Endpoint",
+      "severity": "CRITICAL",
+      "cwe": "CWE-306",
+      "endpoint": "/api/v1/proxies/add",
+      "description": "Any unauthenticated attacker can submit POST requests to /api/v1/proxies/add and inject arbitrary proxy nodes into the active database without authorization.",
+      "evidence": "POST /api/v1/proxies/add returned HTTP 200: {\"success\":true,\"addedCount\":0,\"totalPoolSize\":15}",
+      "remediation": "Enforce mandatory API Key authentication (e.g. Authorization: Bearer <API_KEY>) on all administrative POST/DELETE endpoints.",
+      "timestamp": "2026-07-28 10:41:25"
+    },
+    {
+      "title": "Server-Side Request Forgery (SSRF) via Unvalidated URL Input",
+      "severity": "HIGH",
+      "cwe": "CWE-918",
+      "endpoint": "/api/v1/proxies/add",
+      "description": "The proxy registration endpoint accepts internal IP addresses (e.g., 169.254.169.254, 127.0.0.1) and non-HTTP protocols without strict URL validation.",
+      "evidence": "Submitted SSRF payloads ['http://169.254.169.254/latest/meta-data/', 'http://127.0.0.1:22/', 'file:///etc/passwd'] -> Server responded with success: {\"success\":true,\"addedCount\":0,\"totalPoolSize\":15}",
+      "remediation": "Validate URL hostname against RFC 1918 private address ranges and enforce only public 'http://', 'https://', 'socks4://', and 'socks5://' schemes.",
+      "timestamp": "2026-07-28 10:41:25"
+    },
+    {
+      "title": "Unthrottled Resource-Intensive Sweep Causes Server Timeout (DoS Risk)",
+      "severity": "MEDIUM",
+      "cwe": "CWE-400",
+      "endpoint": "/api/v1/proxies/check",
+      "description": "Sending concurrent POST requests to /api/v1/proxies/check caused the Node.js server event loop to stall and time out, confirming susceptibility to Denial of Service (DoS).",
+      "evidence": "HTTPConnectionPool read timeout after rapid concurrent sweep trigger requests.",
+      "remediation": "Add express-rate-limit and debouncing logic so runPoolSweep() cannot be executed concurrently.",
+      "timestamp": "2026-07-28 10:41:28"
+    }
+  ]
+}

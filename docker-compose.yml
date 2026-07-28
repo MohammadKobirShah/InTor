@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # 1. Tor + Privoxy Indian Exit Node Cluster (3 Independent Worker Instances)
+  # ---------------------------------------------------------------------------
+  indian-tor-node-1:
+    build: .
+    container_name: in-tor-1
+    restart: always
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "8118:8118"
+      - "9050:9050"
+    networks:
+      - indian-proxy-net
+
+  indian-tor-node-2:
+    build: .
+    container_name: in-tor-2
+    restart: always
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "8119:8118"
+      - "9051:9050"
+    networks:
+      - indian-proxy-net
+
+  indian-tor-node-3:
+    build: .
+    container_name: in-tor-3
+    restart: always
+    environment:
+      - NODE_ENV=production
+    ports:
+      - "8120:8118"
+      - "9052:9050"
+    networks:
+      - indian-proxy-net
+
+  # ---------------------------------------------------------------------------
+  # 2. #1 Enterprise Proxy REST API Server & Web Admin Dashboard (Port 8000)
+  # ---------------------------------------------------------------------------
+  indian-proxy-api:
+    build: .
+    container_name: in-proxy-api
+    restart: always
+    command: ["node", "src/api_server.js"]
+    environment:
+      - API_PORT=8000
+      - GATEWAY_PORT=8899
+    ports:
+      - "8000:8000"
+      - "8899:8899"
+    volumes:
+      - ./src:/usr/src/app/src
+      - ./public:/usr/src/app/public
+    depends_on:
+      - indian-tor-node-1
+      - indian-tor-node-2
+      - indian-tor-node-3
+    networks:
+      - indian-proxy-net
+
+networks:
+  indian-proxy-net:
+    driver: bridge

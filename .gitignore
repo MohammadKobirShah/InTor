@@ -1,0 +1,29 @@
+# Node.js dependencies & cache
+node_modules/
+package-lock.json
+npm-debug.log
+yarn-error.log
+
+# Caching directories & logs
+cache_segments/
+*.log
+*.sqlite
+*.db
+
+# Python bytecode & cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Test reports (optional to ignore generated test reports)
+BUG_BOUNTY_AUDIT_REPORT.json
+proxy_test_results.json

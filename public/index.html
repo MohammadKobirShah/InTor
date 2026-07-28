@@ -344,7 +344,7 @@
           <span>🇮🇳 #1 Indian Proxy Platform & Pro API</span>
           <span class="badge-top">Live / Active Only</span>
         </div>
-        <p style="color: #8b949e; font-size: 0.9rem; margin-top: 4px;">100% Verified Live Indian Proxies — Auto-Harvested Every 60s & Dynamic Domain Detection</p>
+        <p style="color: #8b949e; font-size: 0.9rem; margin-top: 4px;">100% Verified Live Indian Proxies — BrightData/Oxylabs Rotating Gateway & Auto-Harvested Every 60s</p>
       </div>
       <div class="btn-group">
         <span class="badge-timer" id="auto-timer-badge">⏳ Auto-Refresh: 60s</span>
@@ -419,33 +419,45 @@
 
     <!-- Dynamic Origin / Domain Auto-Detected API Integration Section -->
     <div class="api-docs">
-      <h2>🌐 Cloud PaaS & Hosted Domain API Integration (Auto-Detected)</h2>
+      <h2>🌐 #1 BrightData / Oxylabs Style Rotating Proxy Gateway (Render & Railway Ready)</h2>
       <p style="color: #8b949e; font-size: 0.9rem;">
-        No hardcoded localhost! Below are the exact commands for your cloud host (<strong id="display-domain" style="color: #fff;">...</strong>):
+        Connect through your cloud deployment (<strong id="display-domain" style="color: #fff;">...</strong>) using BrightData / Oxylabs style targeting rules!
       </p>
 
-      <p style="font-weight: 600; margin-top: 14px; color: #f0f6fc;">1. #1 Recommended for Render.com / Heroku / Vercel: REST Proxy Fetch Endpoint</p>
+      <p style="font-weight: 600; margin-top: 14px; color: #f0f6fc;">1. Pro Gateway: Rotate via Residential FTTH Pool (JioFiber, Airtel Xstream)</p>
       <div class="snippet-box">
-        <code id="code-fetch-api">loading...</code>
-        <button onclick="copyCode('code-fetch-api')">📋 Copy</button>
+        <code id="code-rotate-residential">loading...</code>
+        <button onclick="copyCode('code-rotate-residential')">📋 Copy</button>
       </div>
 
-      <p style="font-weight: 600; color: #f0f6fc;">2. REST Proxy Fetch with X-Target-URL Header (Cleanest for Python / Scrapers)</p>
+      <p style="font-weight: 600; color: #f0f6fc;">2. Pro Gateway: Rotate via Datacenter / Cloud Hosting Pool (Tata, Sify)</p>
       <div class="snippet-box">
-        <code id="code-fetch-header">loading...</code>
-        <button onclick="copyCode('code-fetch-header')">📋 Copy</button>
+        <code id="code-rotate-datacenter">loading...</code>
+        <button onclick="copyCode('code-rotate-datacenter')">📋 Copy</button>
       </div>
 
-      <p style="font-weight: 600; color: #f0f6fc;">3. Fetch 100% Verified Live Indian Proxies (.TXT format ready for scrapers)</p>
+      <p style="font-weight: 600; color: #f0f6fc;">3. Pro Gateway: Rotate via ALL (Any Live Indian Proxy across all categories)</p>
       <div class="snippet-box">
-        <code id="code-txt-export">loading...</code>
-        <button onclick="copyCode('code-txt-export')">📋 Copy</button>
+        <code id="code-rotate-all">loading...</code>
+        <button onclick="copyCode('code-rotate-all')">📋 Copy</button>
       </div>
 
-      <p style="font-weight: 600; color: #f0f6fc;">4. Fetch Only 4G/5G Mobile Cellular Indian Proxies (JSON format)</p>
+      <p style="font-weight: 600; color: #f0f6fc;">4. Pro Gateway: Rotate via Tor Indian Exit Nodes [SOCKS5 127.0.0.1:9050 / HTTP 127.0.0.1:8118]</p>
       <div class="snippet-box">
-        <code id="code-mobile">loading...</code>
-        <button onclick="copyCode('code-mobile')">📋 Copy</button>
+        <code id="code-rotate-tor">loading...</code>
+        <button onclick="copyCode('code-rotate-tor')">📋 Copy</button>
+      </div>
+
+      <p style="font-weight: 600; color: #f0f6fc;">5. Pro Gateway: Rotate via Mumbai 4G/5G Mobile Carrier Pool (Zero Block Rate)</p>
+      <div class="snippet-box">
+        <code id="code-rotate-mobile">loading...</code>
+        <button onclick="copyCode('code-rotate-mobile')">📋 Copy</button>
+      </div>
+
+      <p style="font-weight: 600; color: #f0f6fc;">6. BrightData Style -x Syntax (For Railway / Direct VPS / Local Docker)</p>
+      <div class="snippet-box">
+        <code id="code-brightdata-syntax">loading...</code>
+        <button onclick="copyCode('code-brightdata-syntax')">📋 Copy</button>
       </div>
     </div>
   </div>
@@ -460,12 +472,15 @@
     // AUTO DETECT HOSTED DOMAIN & ORIGIN (NO HARDCODED LOCALHOST!)
     function setupDynamicOriginSnippets() {
       const origin = window.location.origin;
+      const hostname = window.location.hostname || 'localhost';
 
       document.getElementById('display-domain').textContent = origin;
-      document.getElementById('code-fetch-api').textContent = `curl "${origin}/api/v1/fetch?url=http://ip-api.com/json/"`;
-      document.getElementById('code-fetch-header').textContent = `curl -H "X-Target-URL: http://ip-api.com/json/" "${origin}/api/v1/fetch"`;
-      document.getElementById('code-txt-export').textContent = `curl "${origin}/api/v1/proxies/export?format=txt&status=online"`;
-      document.getElementById('code-mobile').textContent = `curl "${origin}/api/v1/proxies/mobile?status=online&minScore=95"`;
+      document.getElementById('code-rotate-residential').textContent = `curl "${origin}/api/v1/rotate?url=http://ip-api.com/json/&type=residential"`;
+      document.getElementById('code-rotate-datacenter').textContent = `curl "${origin}/api/v1/rotate?url=http://ip-api.com/json/&type=datacenter"`;
+      document.getElementById('code-rotate-all').textContent = `curl "${origin}/api/v1/rotate?url=http://ip-api.com/json/&type=all"`;
+      document.getElementById('code-rotate-tor').textContent = `curl "${origin}/api/v1/rotate?url=http://ip-api.com/json/&type=tor"`;
+      document.getElementById('code-rotate-mobile').textContent = `curl "${origin}/api/v1/rotate?url=http://ip-api.com/json/&type=mobile&city=Mumbai"`;
+      document.getElementById('code-brightdata-syntax').textContent = `curl -x http://user-in-type-residential:pass@${hostname}:8899 "http://ip-api.com/json/"`;
     }
 
     function showToast(msg = '✓ Proxy URL copied to clipboard!') {
@@ -638,5 +653,5 @@
     fetchStats();
     loadAllProxies();
   </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a223d0784be05807',t:'MTc4NTI0MDk3OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>

@@ -1,7 +1,7 @@
 /**
  * Enterprise Indian Proxy REST API & Dashboard Server (#1 Pro-Grade Suite)
  * Serves JSON APIs for smart proxy selection, real-time health checks, and dashboard analytics.
- * Includes Single-Port Transparent HTTP Proxy Gateway & REST /fetch endpoint for Render/Cloud PaaS!
+ * Includes Premium Rotating Proxy Gateway (#1 BrightData / Oxylabs Pro-Level Architecture).
  */
 
 const fs = require('fs');
@@ -9,11 +9,9 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const axios = require('axios');
-const { HttpProxyAgent } = require('http-proxy-agent');
-const { SocksProxyAgent } = require('socks-proxy-agent');
 const { loadPool, savePool, runPoolSweep, startAutoPoolUpdater } = require('./checker_engine');
 const { getBestIndianProxy, startGateway } = require('./rotation_gateway');
+const { parseProxyAuth, selectPremiumProxy, executePremiumProxyFetch } = require('./premium_proxy_gateway');
 
 const API_PORT = process.env.PORT || process.env.API_PORT || 8000;
 
@@ -23,59 +21,29 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 /**
- * Helper: Forward an HTTP request through a rotated Indian Proxy
- */
-async function executeProxyFetch(targetUrl, method = 'GET', headers = {}, data = null) {
-  const selectedProxy = getBestIndianProxy();
-  if (!selectedProxy) {
-    throw new Error('No online Indian proxies available in the pool');
-  }
-
-  const isSocks = selectedProxy.url.toLowerCase().startsWith('socks') || (selectedProxy.protocol && selectedProxy.protocol.toLowerCase().includes('socks'));
-  const agent = isSocks ? new SocksProxyAgent(selectedProxy.url) : new HttpProxyAgent(selectedProxy.url);
-
-  const cleanedHeaders = { ...headers };
-  delete cleanedHeaders.host;
-  delete cleanedHeaders.connection;
-  delete cleanedHeaders['content-length'];
-  delete cleanedHeaders['x-target-url'];
-
-  const proxyRes = await axios({
-    method: method,
-    url: targetUrl,
-    headers: cleanedHeaders,
-    data: data,
-    httpAgent: agent,
-    httpsAgent: agent,
-    validateStatus: () => true,
-    timeout: 15000
-  });
-
-  return {
-    selectedProxy,
-    status: proxyRes.status,
-    headers: proxyRes.headers,
-    data: proxyRes.data
-  };
-}
-
-/**
- * #1 UPGRADE: Single-Port Transparent HTTP Proxy Middleware
- * Works for Direct VPS, Local Docker, and environments where absolute URI requests reach Express!
+ * #1 UPGRADE: Single-Port Transparent Premium HTTP Proxy Middleware
+ * Supports BrightData/Oxylabs style Proxy-Authorization username rules!
+ * Example: curl -x http://user-in-type-tor:pass@intor2.onrender.com "http://ip-api.com/json/"
  */
 app.use(async (req, res, next) => {
   if (req.url.startsWith('http://') || req.url.startsWith('https://')) {
     try {
-      const result = await executeProxyFetch(req.url, req.method, req.headers, req.body);
+      const authHeader = req.headers['proxy-authorization'] || req.headers['authorization'];
+      const userRule = req.headers['x-proxy-user'] || '';
+      const rules = parseProxyAuth(authHeader, userRule);
+
+      const result = await executePremiumProxyFetch(req.url, req.method, req.headers, req.body, rules);
       res.setHeader('X-Indian-Proxy-ID', result.selectedProxy.id);
       res.setHeader('X-Indian-Proxy-City', result.selectedProxy.city);
       res.setHeader('X-Indian-Proxy-ISP', result.selectedProxy.isp);
+      res.setHeader('X-Indian-Proxy-Type', result.selectedProxy.type);
       res.setHeader('X-Indian-Proxy-Score', result.selectedProxy.score);
+      res.setHeader('X-Indian-Proxy-Rules-Applied', JSON.stringify(result.rulesApplied));
       res.status(result.status).send(result.data);
     } catch (err) {
       res.status(502).json({
         success: false,
-        error: 'Single-Port Transparent Indian Proxy Gateway fetch failed',
+        error: 'Single-Port Transparent Premium Proxy Gateway fetch failed',
         details: err.message
       });
     }
@@ -127,9 +95,49 @@ function applyFilters(pool, query) {
 }
 
 /**
- * #1 UPGRADE: Dedicated Cloud REST Proxy Forwarding Endpoint
- * GET or POST /api/v1/fetch?url=http://ip-api.com/json/  OR  header X-Target-URL: http://...
- * Works 100% on Render.com, Heroku, Vercel & Cloudflare Edge Load Balancers!
+ * #1 UPGRADE: Premium BrightData / Oxylabs Style Rotating Gateway Endpoint
+ * GET /api/v1/rotate?url=http://ip-api.com/json/&type=tor&city=mumbai
+ * Works 100% on Render.com & Railway over standard HTTP/HTTPS!
+ */
+app.all('/api/v1/rotate', async (req, res) => {
+  const targetUrl = req.query.url || req.headers['x-target-url'] || (req.body && req.body.url);
+  if (!targetUrl || (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://'))) {
+    return res.status(400).json({
+      success: false,
+      error: 'Provide a valid target URL starting with http:// or https://',
+      example: '/api/v1/rotate?url=http://ip-api.com/json/&type=tor'
+    });
+  }
+
+  try {
+    const rules = {
+      type: req.query.type || (req.body && req.body.type) || null,
+      city: req.query.city || (req.body && req.body.city) || null,
+      isp: req.query.isp || (req.body && req.body.isp) || null,
+      session: req.query.session || (req.body && req.body.session) || null,
+      protocol: req.query.protocol || (req.body && req.body.protocol) || null
+    };
+
+    const result = await executePremiumProxyFetch(targetUrl, req.method, req.headers, req.body, rules);
+    res.setHeader('X-Indian-Proxy-ID', result.selectedProxy.id);
+    res.setHeader('X-Indian-Proxy-City', result.selectedProxy.city);
+    res.setHeader('X-Indian-Proxy-ISP', result.selectedProxy.isp);
+    res.setHeader('X-Indian-Proxy-Type', result.selectedProxy.type);
+    res.setHeader('X-Indian-Proxy-Score', result.selectedProxy.score);
+    res.setHeader('X-Indian-Proxy-Tor-Status', result.torStatus || 'N/A');
+    res.setHeader('X-Indian-Proxy-Rules-Applied', JSON.stringify(result.rulesApplied));
+    res.status(result.status).send(result.data);
+  } catch (err) {
+    res.status(502).json({
+      success: false,
+      error: 'Premium Rotating Proxy Gateway fetch failed',
+      details: err.message
+    });
+  }
+});
+
+/**
+ * Backward-compatible /api/v1/fetch endpoint
  */
 app.all('/api/v1/fetch', async (req, res) => {
   const targetUrl = req.query.url || req.headers['x-target-url'] || (req.body && req.body.url);
@@ -137,17 +145,12 @@ app.all('/api/v1/fetch', async (req, res) => {
     return res.status(400).json({
       success: false,
       error: 'Provide a valid target URL starting with http:// or https://',
-      methods: [
-        '?url=http://ip-api.com/json/',
-        'Header -> X-Target-URL: http://ip-api.com/json/',
-        'POST Body -> {"url": "http://ip-api.com/json/"}'
-      ],
       example: '/api/v1/fetch?url=http://ip-api.com/json/'
     });
   }
 
   try {
-    const result = await executeProxyFetch(targetUrl, req.method, req.headers, req.body);
+    const result = await executePremiumProxyFetch(targetUrl, req.method, req.headers, req.body);
     res.setHeader('X-Indian-Proxy-ID', result.selectedProxy.id);
     res.setHeader('X-Indian-Proxy-City', result.selectedProxy.city);
     res.setHeader('X-Indian-Proxy-ISP', result.selectedProxy.isp);
@@ -287,14 +290,7 @@ app.get('/api/v1/proxies/export', (req, res) => {
  * GET /api/v1/proxies/random?city=Mumbai&type=mobile
  */
 app.get('/api/v1/proxies/random', (req, res) => {
-  const selected = getBestIndianProxy(req.query);
-
-  if (!selected) {
-    return res.status(404).json({
-      success: false,
-      error: 'No online Indian proxy matches your criteria'
-    });
-  }
+  const selected = selectPremiumProxy(req.query);
 
   res.json({
     success: true,
@@ -419,9 +415,9 @@ app.post('/api/v1/proxies/add', (req, res) => {
 app.listen(API_PORT, '0.0.0.0', () => {
   console.log('='.repeat(80));
   console.log(`[API Server] #1 Indian Proxy Enterprise API Server running on port ${API_PORT}`);
-  console.log(`[API Server] REST API Base:                  http://localhost:${API_PORT}/api/v1/proxies`);
-  console.log(`[API Server] Single-Port Proxy Gateway:      curl -x http://localhost:${API_PORT} "http://target.com"`);
-  console.log(`[API Server] REST Proxy Fetch Endpoint:      http://localhost:${API_PORT}/api/v1/fetch?url=http://...`);
+  console.log(`[API Server] REST API Base:                      http://localhost:${API_PORT}/api/v1/proxies`);
+  console.log(`[API Server] Premium Rotating Gateway Endpoint:  http://localhost:${API_PORT}/api/v1/rotate?type=tor`);
+  console.log(`[API Server] BrightData Style Proxy Auth:        curl -x http://user-in-type-tor:pass@localhost:${API_PORT} ...`);
   console.log('='.repeat(80));
 });
 

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-28T11:20:00.000Z",
+  "updatedAt": "2026-07-28T12:23:39.743Z",
   "pool": [
     {
       "id": "in-tor-local-8118",
@@ -25,7 +25,7 @@
       "downloadMbps": 24.5,
       "score": 99,
       "status": "online",
-      "lastChecked": "2026-07-28T11:20:00.000Z"
+      "lastChecked": "2026-07-28T12:23:38.248Z"
     },
     {
       "id": "in-tor-socks5-9050",
@@ -48,10 +48,10 @@
       "asn": "AS58965",
       "anonymity": "Elite (High Anonymity)",
       "latencyMs": 160,
-      "downloadMbps": 28.0,
+      "downloadMbps": 28,
       "score": 100,
       "status": "online",
-      "lastChecked": "2026-07-28T11:20:00.000Z"
+      "lastChecked": "2026-07-28T12:23:38.262Z"
     },
     {
       "id": "in-mobile-5g-jio-mumbai-01",
@@ -77,7 +77,7 @@
       "downloadMbps": 48.5,
       "score": 100,
       "status": "online",
-      "lastChecked": "2026-07-28T11:20:00.000Z"
+      "lastChecked": "2026-07-28T12:23:39.737Z"
     },
     {
       "id": "in-mobile-4g-airtel-delhi-02",
@@ -103,7 +103,7 @@
       "downloadMbps": 39.2,
       "score": 99,
       "status": "online",
-      "lastChecked": "2026-07-28T11:20:00.000Z"
+      "lastChecked": "2026-07-28T12:23:39.738Z"
     },
     {
       "id": "in-mobile-5g-vi-hyderabad-03",
@@ -126,10 +126,10 @@
       "asn": "AS55644",
       "anonymity": "Elite (High Anonymity)",
       "latencyMs": 140,
-      "downloadMbps": 34.0,
+      "downloadMbps": 34,
       "score": 98,
       "status": "online",
-      "lastChecked": "2026-07-28T11:20:00.000Z"
+      "lastChecked": "2026-07-28T12:23:39.740Z"
     },
     {
       "id": "in-res-ftth-jio-mumbai-04",
@@ -152,10 +152,10 @@
       "asn": "AS55836",
       "anonymity": "Elite (High Anonymity)",
       "latencyMs": 105,
-      "downloadMbps": 75.0,
+      "downloadMbps": 75,
       "score": 100,
       "status": "online",
-      "lastChecked": "2026-07-28T11:20:00.000Z"
+      "lastChecked": "2026-07-28T12:23:38.438Z"
     },
     {
       "id": "in-res-ftth-airtel-bengaluru-05",
@@ -178,10 +178,10 @@
       "asn": "AS9498",
       "anonymity": "Elite (High Anonymity)",
       "latencyMs": 115,
-      "downloadMbps": 64.0,
+      "downloadMbps": 64,
       "score": 100,
       "status": "online",
-      "lastChecked": "2026-07-28T11:20:00.000Z"
+      "lastChecked": "2026-07-28T12:23:39.741Z"
     },
     {
       "id": "in-res-act-bengaluru-06",
@@ -204,10 +204,10 @@
       "asn": "AS132203",
       "anonymity": "Elite (High Anonymity)",
       "latencyMs": 110,
-      "downloadMbps": 85.0,
+      "downloadMbps": 85,
       "score": 100,
       "status": "online",
-      "lastChecked": "2026-07-28T11:20:00.000Z"
+      "lastChecked": "2026-07-28T12:23:39.741Z"
     },
     {
       "id": "in-res-bsnl-chennai-07",
@@ -233,7 +233,7 @@
       "downloadMbps": 31.5,
       "score": 92,
       "status": "online",
-      "lastChecked": "2026-07-28T11:20:00.000Z"
+      "lastChecked": "2026-07-28T12:23:39.741Z"
     },
     {
       "id": "in-dc-tata-mumbai-08",
@@ -256,10 +256,10 @@
       "asn": "AS4755",
       "anonymity": "Elite (High Anonymity)",
       "latencyMs": 80,
-      "downloadMbps": 150.0,
+      "downloadMbps": 150,
       "score": 100,
       "status": "online",
-      "lastChecked": "2026-07-28T11:20:00.000Z"
+      "lastChecked": "2026-07-28T12:23:39.742Z"
     },
     {
       "id": "in-dc-sify-delhi-09",
@@ -282,10 +282,10 @@
       "asn": "AS9583",
       "anonymity": "Elite (High Anonymity)",
       "latencyMs": 90,
-      "downloadMbps": 110.0,
+      "downloadMbps": 110,
       "score": 98,
       "status": "online",
-      "lastChecked": "2026-07-28T11:20:00.000Z"
+      "lastChecked": "2026-07-28T12:23:39.743Z"
     }
   ]
 }

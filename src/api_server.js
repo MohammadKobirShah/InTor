@@ -8,7 +8,7 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
-const { loadPool, savePool, runPoolSweep } = require('./checker_engine');
+const { loadPool, savePool, runPoolSweep, startAutoPoolUpdater } = require('./checker_engine');
 const { getBestIndianProxy, startGateway } = require('./rotation_gateway');
 
 const API_PORT = process.env.API_PORT || 8000;
@@ -324,3 +324,6 @@ app.listen(API_PORT, '0.0.0.0', () => {
 
 // Automatically launch Smart Rotation Gateway alongside API server (Port 8899)
 startGateway();
+
+// #1 UPGRADE: Automatically sweep and harvest live Indian proxies every 60 seconds (1 minute)
+startAutoPoolUpdater(60000);

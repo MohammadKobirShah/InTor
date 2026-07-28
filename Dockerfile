@@ -4,7 +4,6 @@ FROM node:20-alpine
 ENV NODE_ENV=production
 
 # Pre-configure our automatic free Indian Residential/Exit proxy (Tor SOCKS5 -> Privoxy HTTP)
-# Cleaned URL formatting (removed markdown link artifacts)
 ENV INDIAN_PROXY="http://127.0.0.1:8118"
 
 # Install Tor, Privoxy, bash, and curl (for health checking)
@@ -20,8 +19,10 @@ COPY allowed_247_channels.json ./
 # Install Node.js dependencies
 RUN npm install --omit=dev || true
 
-# Copy application source code and entrypoint
-COPY server.js ./
+# Copy all application source directories and files
+COPY src/ ./src/
+COPY public/ ./public/
+COPY server.js* ./
 COPY entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
@@ -31,7 +32,7 @@ RUN mkdir -p /var/lib/tor && \
     chmod -R 700 /var/lib/tor && \
     echo "ExitNodes {in}" >> /etc/tor/torrc && \
     echo "StrictNodes 1" >> /etc/tor/torrc && \
-    echo "SocksPort 127.0.0.1:9050" >> /etc/tor/torrc && \
+    echo "SocksPort 0.0.0.0:9050" >> /etc/tor/torrc && \
     echo "DataDirectory /var/lib/tor" >> /etc/tor/torrc && \
     echo "User tor" >> /etc/tor/torrc && \
     echo "Log notice file /var/log/tor/notices.log" >> /etc/tor/torrc && \
@@ -40,16 +41,14 @@ RUN mkdir -p /var/lib/tor && \
 
 # Configure Privoxy (Convert SOCKS5 Tor proxy to standard HTTP Proxy on Port 8118)
 RUN echo "forward-socks5t / 127.0.0.1:9050 ." >> /etc/privoxy/config && \
-    echo "listen-address 127.0.0.1:8118" >> /etc/privoxy/config && \
+    echo "listen-address 0.0.0.0:8118" >> /etc/privoxy/config && \
     sed -i 's/toggle 1/toggle 0/g' /etc/privoxy/config || true
 
 # Create cache directory and grant permissions
 RUN mkdir -p cache_segments && chmod -R 777 cache_segments
 
-# Expose default HTTP server port
-EXPOSE 7890
-# Optionally expose Privoxy HTTP proxy port for host debugging
-EXPOSE 8118
+# Expose HTTP API Server (8000), Smart Gateway (8899), Stream Cache (7890), Privoxy (8118), Tor SOCKS5 (9050)
+EXPOSE 8000 8899 7890 8118 9050
 
 # Use custom entrypoint script to cleanly start Tor, Privoxy, and Node.js
 ENTRYPOINT ["/usr/src/app/entrypoint.sh"]

@@ -424,16 +424,16 @@
         No hardcoded localhost! Below are the exact commands for your cloud host (<strong id="display-domain" style="color: #fff;">...</strong>):
       </p>
 
-      <p style="font-weight: 600; margin-top: 14px; color: #f0f6fc;">1. Single-Port Transparent HTTP Proxy Gateway (Works 100% on Render / Cloud Host without custom port!)</p>
-      <div class="snippet-box">
-        <code id="code-gateway-singleport">loading...</code>
-        <button onclick="copyCode('code-gateway-singleport')">📋 Copy</button>
-      </div>
-
-      <p style="font-weight: 600; color: #f0f6fc;">2. REST Proxy Fetch Endpoint (Alternative for Browser / Scraper GET requests)</p>
+      <p style="font-weight: 600; margin-top: 14px; color: #f0f6fc;">1. #1 Recommended for Render.com / Heroku / Vercel: REST Proxy Fetch Endpoint</p>
       <div class="snippet-box">
         <code id="code-fetch-api">loading...</code>
         <button onclick="copyCode('code-fetch-api')">📋 Copy</button>
+      </div>
+
+      <p style="font-weight: 600; color: #f0f6fc;">2. REST Proxy Fetch with X-Target-URL Header (Cleanest for Python / Scrapers)</p>
+      <div class="snippet-box">
+        <code id="code-fetch-header">loading...</code>
+        <button onclick="copyCode('code-fetch-header')">📋 Copy</button>
       </div>
 
       <p style="font-weight: 600; color: #f0f6fc;">3. Fetch 100% Verified Live Indian Proxies (.TXT format ready for scrapers)</p>
@@ -460,12 +460,10 @@
     // AUTO DETECT HOSTED DOMAIN & ORIGIN (NO HARDCODED LOCALHOST!)
     function setupDynamicOriginSnippets() {
       const origin = window.location.origin;
-      const hostname = window.location.hostname || 'localhost';
 
       document.getElementById('display-domain').textContent = origin;
-      // Single-Port HTTP Proxy command (No :8899 needed on Render/PaaS!)
-      document.getElementById('code-gateway-singleport').textContent = `curl -x ${origin} "http://ip-api.com/json/"`;
       document.getElementById('code-fetch-api').textContent = `curl "${origin}/api/v1/fetch?url=http://ip-api.com/json/"`;
+      document.getElementById('code-fetch-header').textContent = `curl -H "X-Target-URL: http://ip-api.com/json/" "${origin}/api/v1/fetch"`;
       document.getElementById('code-txt-export').textContent = `curl "${origin}/api/v1/proxies/export?format=txt&status=online"`;
       document.getElementById('code-mobile').textContent = `curl "${origin}/api/v1/proxies/mobile?status=online&minScore=95"`;
     }
@@ -640,5 +638,5 @@
     fetchStats();
     loadAllProxies();
   </script>
-<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a223c4ccc9435807',t:'MTc4NTI0MDUwMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a223d0784be05807',t:'MTc4NTI0MDk3OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

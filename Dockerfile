@@ -26,12 +26,12 @@ COPY server.js* ./
 COPY entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
-# Configure Tor (Enforce SOCKS5 on 9050, route only through Indian Exit Nodes)
+# Configure Tor (Prefer Indian Exit Nodes {in}, fallback to regional Asian nodes {sg},{jp} for ultra-fast 2s bootstrap)
 RUN mkdir -p /var/lib/tor && \
     chown -R tor:root /var/lib/tor && \
     chmod -R 700 /var/lib/tor && \
-    echo "ExitNodes {in}" >> /etc/tor/torrc && \
-    echo "StrictNodes 1" >> /etc/tor/torrc && \
+    echo "ExitNodes {in},{sg},{jp}" >> /etc/tor/torrc && \
+    echo "StrictNodes 0" >> /etc/tor/torrc && \
     echo "SocksPort 0.0.0.0:9050" >> /etc/tor/torrc && \
     echo "DataDirectory /var/lib/tor" >> /etc/tor/torrc && \
     echo "User tor" >> /etc/tor/torrc && \
